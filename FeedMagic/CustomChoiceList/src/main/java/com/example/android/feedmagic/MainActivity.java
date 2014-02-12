@@ -38,6 +38,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -55,7 +58,8 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
     SimpleCursorAdapter mAdapter;
     private static String[] sUrl = {
             "http://www.npr.org/rss/rss.php?id=1006",
-            "http://feeds.bbci.co.uk/news/rss.xml"
+            "http://feeds.bbci.co.uk/news/rss.xml",
+            "https://medium.com/feed/tech-talk"
 
     };
 //    http://www.npr.org/rss/rss.php?id=1006",
@@ -73,17 +77,8 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
                 if (view.getId() == R.id.text3) {
                     long timestamp = cursor.getLong(cursor.getColumnIndex("timestamp"));
-                    long currentTime = System.currentTimeMillis();
                     String timeText;
-                    long timeDiff = currentTime - timestamp;
-
-                    if (timeDiff < (60 * 1000)) {
-                        timeText = timeDiff / (60 * 1000) + " sec ";
-                    } else if (timeDiff < (60 * 60 * 1000)) {
-                        timeText = timeDiff / (60 * 60 * 1000) + " h ";
-                    } else {
-                        timeText = new SimpleDateFormat("dd MMM").format(new Date(timestamp));
-                    }
+                    timeText = new SimpleDateFormat("dd MMM HH:mm").format(new Date(timestamp));
                     TextView tv = (TextView) view;
                     tv.setText(timeText);
                     return true;
@@ -92,15 +87,14 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                     ImageView iv = (ImageView) view;
                     try {
                         String url =  cursor.getString(cursor.getColumnIndex("subject"));
-
                         if (url.contains("medium")) {
                             Drawable image = getResources().getDrawable(R.drawable.medium);
                             iv.setImageDrawable(image);
                         } else if (url.contains("npr")) {
                             Drawable image = getResources().getDrawable(R.drawable.npr);
                             iv.setImageDrawable(image);
-                        } else if (url.contains("verge")){
-                            Drawable image = getResources().getDrawable(R.drawable.verge);
+                        } else if (url.contains("bbc")){
+                            Drawable image = getResources().getDrawable(R.drawable.bbc);
                             iv.setImageDrawable(image);
                         } else {
                             Drawable image = getResources().getDrawable(R.drawable.rss);
@@ -117,9 +111,20 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                     if(url == null || url.isEmpty()){
                         iv.setVisibility(View.GONE);
                     } else {
-                        iv.setTag(url);
-                        new DownloadImagesTask().execute(iv);
                         iv.setVisibility(View.VISIBLE);
+                        File file = new File("data/data/com.example.android.feedmagic/feedimg-" + url.hashCode());
+                        if(file.exists()){
+                            try {
+                                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                                iv.setImageBitmap(bitmap);
+                            }
+                            catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            iv.setTag(url);
+                            new DownloadImagesTask().execute(iv);
+                        }
                     }
                     return true;
                 }

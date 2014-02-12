@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -35,6 +37,18 @@ public class DownloadImagesTask extends AsyncTask<ImageView, Void, Bitmap> {
         Bitmap bitmap = null;
         try {
             bitmap = BitmapFactory.decodeStream((InputStream) new URL(url).getContent());
+            try {
+                File file = new File("data/data/com.example.android.feedmagic/feedimg-" + url.hashCode());
+                if(!file.exists()){
+                    file.createNewFile();
+                }
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                out.flush();
+                out.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
