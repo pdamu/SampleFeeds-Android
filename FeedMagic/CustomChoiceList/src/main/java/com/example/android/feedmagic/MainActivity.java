@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -48,6 +49,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * This sample demonstrates how to create custom single- or multi-choice
@@ -56,10 +58,13 @@ import java.util.Date;
  */
 public class MainActivity extends ListActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     SimpleCursorAdapter mAdapter;
+    HashMap<String,Bitmap> bitmapHashMap = new HashMap<String, Bitmap>();
     private static String[] sUrl = {
             "http://www.npr.org/rss/rss.php?id=1006",
             "http://feeds.bbci.co.uk/news/rss.xml",
-            "https://medium.com/feed/tech-talk"
+            "https://medium.com/feed/tech-talk",
+            "http://feeds.bbci.co.uk/sport/0/rss.xml",
+            "http://www.buzzfeed.com/tech.xml"
 
     };
 //    http://www.npr.org/rss/rss.php?id=1006",
@@ -114,12 +119,17 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                         iv.setVisibility(View.VISIBLE);
                         File file = new File("data/data/com.example.android.feedmagic/feedimg-" + url.hashCode());
                         if(file.exists()){
-                            try {
-                                Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                            Bitmap bitmap = bitmapHashMap.get(url);
+                            if (bitmap == null) {
+                                try {
+                                    bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                                    bitmapHashMap.put(url,bitmap);
+                                    iv.setImageBitmap(bitmap);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
                                 iv.setImageBitmap(bitmap);
-                            }
-                            catch (Exception e) {
-                                e.printStackTrace();
                             }
                         } else {
                             iv.setTag(url);
@@ -133,15 +143,21 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
             }
         });
         setListAdapter(mAdapter);
-        for (String url : sUrl) {
-            FeedPuller fp = new FeedPuller(getApplicationContext());
-            fp.execute(url);
+        if (isNetworkAvailable(getApplicationContext())) {
+            for (String url : sUrl) {
+                FeedPuller fp = new FeedPuller(getApplicationContext());
+                fp.execute(url);
+            }
+        }
+        else{
+            Toast.makeText(getApplicationContext(), "No network connectivity", 10).show();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        bitmapHashMap.clear();
     }
 
     @Override
@@ -216,6 +232,11 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         public MyAdapter(Context context, Cursor c) {
             super(context, R.layout.list_item, c, new String[]{"imageurl","imageurl","name", "body", "timestamp", }, new int[]{android.R.id.icon1,android.R.id.icon2, android.R.id.text1, android.R.id.text2, R.id.text3}, 0);
         }
+    }
+
+    public static boolean isNetworkAvailable(Context context)
+    {
+        return ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo() != null;
     }
 
 }

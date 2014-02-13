@@ -71,8 +71,8 @@ public class FeedPuller extends AsyncTask<String, Void, List<InboxItem>> {
                 values.put("title", item.getName().trim());
                 values.put("link", item.getSubject());
                 StringBuffer description = new StringBuffer(Html.fromHtml(item.getBody()).toString().trim());
-                if(description.length() > 100 ){
-                    description.setLength(100);
+                if(description.length() > 150 ){
+                    description.setLength(150);
                     description.append("..");
                 }
                 values.put("description",description.toString() );
