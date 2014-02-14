@@ -24,6 +24,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -58,7 +59,7 @@ import java.util.HashMap;
  */
 public class MainActivity extends ListActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     SimpleCursorAdapter mAdapter;
-    HashMap<String,Bitmap> bitmapHashMap = new HashMap<String, Bitmap>();
+    LruCache<String,Bitmap> bitmapHashMap = new LruCache<String, Bitmap>(200);
     private static String[] sUrl = {
             "http://www.npr.org/rss/rss.php?id=1006",
             "http://feeds.bbci.co.uk/news/rss.xml",
@@ -117,25 +118,14 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                         iv.setVisibility(View.GONE);
                     } else {
                         iv.setVisibility(View.VISIBLE);
-                        File file = new File("data/data/com.example.android.feedmagic/feedimg-" + url.hashCode());
-                        if(file.exists()){
-                            Bitmap bitmap = bitmapHashMap.get(url);
-                            if (bitmap == null) {
-                                try {
-                                    bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                                    bitmapHashMap.put(url,bitmap);
-                                    iv.setImageBitmap(bitmap);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                iv.setImageBitmap(bitmap);
-                            }
-                        } else {
+                        Bitmap bitmap = bitmapHashMap.get(url);
+                        if (bitmap == null) {
                             iv.setTag(url);
-                            new DownloadImagesTask().execute(iv);
+                            new DownloadImagesTask(bitmapHashMap).execute(iv);
+                        } else {
+                            iv.setImageBitmap(bitmap);
                         }
-                    }
+                 }
                     return true;
                 }
 
@@ -157,7 +147,6 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        bitmapHashMap.clear();
     }
 
     @Override
