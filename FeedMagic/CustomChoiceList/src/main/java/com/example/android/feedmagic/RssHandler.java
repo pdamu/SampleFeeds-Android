@@ -1,7 +1,5 @@
 package com.example.android.feedmagic;
 
-import android.util.Log;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -13,9 +11,11 @@ import java.util.Date;
 import java.util.List;
 
 public class RssHandler extends DefaultHandler {
-    private List<InboxItem> messages =  new ArrayList<InboxItem>();;
-    private InboxItem currentMessage;
+    private List<FeedItem> messages =  new ArrayList<FeedItem>();;
+    private FeedItem currentMessage;
     private StringBuilder builder;
+    private String mUrl;
+    private Feeds mFeeds = new Feeds();
 
     // names of the XML tags
     static final String RSS = "rss";
@@ -30,7 +30,7 @@ public class RssHandler extends DefaultHandler {
     static final String IMAGE = "image";
 
 
-    public List<InboxItem> getMessages(){
+    public List<FeedItem> getMessages(){
         return this.messages;
     }
     @Override
@@ -56,11 +56,10 @@ public class RssHandler extends DefaultHandler {
             }else if (localName.equalsIgnoreCase(GUID)){
                 currentMessage.setGuid(builder.toString());
             } else if (localName.equalsIgnoreCase("media")){
-                //currentMessage.setGuid(builder.toString());
-                Log.v("feedmagic", "Image url is XXXX " + builder.toString());
 
             } else if (localName.equalsIgnoreCase(ITEM)){
-                    messages.add(currentMessage);
+                currentMessage.setType(mFeeds.getFeedType(mUrl).ordinal());
+                messages.add(currentMessage);
             }
             builder.setLength(0);
         }
@@ -77,20 +76,20 @@ public class RssHandler extends DefaultHandler {
                              Attributes attributes) throws SAXException {
         super.startElement(uri, localName, name, attributes);
         if (localName.equalsIgnoreCase(ITEM)){
-            this.currentMessage = new InboxItem();
-        }
-
-        if (localName.equalsIgnoreCase(IMAGE)){
-            Log.v("feedmagic", "Image url is XXXX ");
+            this.currentMessage = new FeedItem();
         }
         if(localName.equals("thumbnail")){
-            if(attributes.getValue("url") !=null){
+            if(attributes.getValue("url") != null){
                 String imageurl = attributes.getValue("url");
-                Log.v("feedmagic", "thumbnail url is  " + imageurl);
                 this.currentMessage.setImageUrl(imageurl);
             }
         }
     }
+
+    public void setCurrentSource(String url){
+        mUrl = url;
+    }
+
     private long parseDate(String dateString){
         long timeStamp = 0;
         dateString = dateString.replace('\n',' ');

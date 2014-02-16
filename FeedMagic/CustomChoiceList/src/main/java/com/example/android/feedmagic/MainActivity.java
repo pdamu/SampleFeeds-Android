@@ -19,11 +19,12 @@ package com.example.android.feedmagic;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.LruCache;
 import android.view.View;
 import android.widget.ImageView;
@@ -40,17 +41,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.DateFormat;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * This sample demonstrates how to create custom single- or multi-choice
@@ -59,21 +52,9 @@ import java.util.HashMap;
  */
 public class MainActivity extends ListActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     SimpleCursorAdapter mAdapter;
-    LruCache<String,Bitmap> bitmapHashMap = new LruCache<String, Bitmap>(200);
-    private static String[] sUrl = {
-            "http://www.npr.org/rss/rss.php?id=1006",
-            "http://feeds.bbci.co.uk/news/rss.xml",
-            "https://medium.com/feed/tech-talk",
-            "http://feeds.bbci.co.uk/sport/0/rss.xml",
-            "http://www.buzzfeed.com/tech.xml"
+    LruCache<String, Bitmap> bitmapHashMap = new LruCache<String, Bitmap>(200);
+    Feeds mFeeds = new Feeds();
 
-    };
-//    http://www.npr.org/rss/rss.php?id=1006",
-//            "http://www.npr.org/rss/rss.php?id=1004",
-//            "http://www.npr.org/rss/rss.php?id=1021",
-//            "https://medium.com/feed/tech-talk",
-//            "http://mobile.reuters.com/reuters/rss/TECH.xml",
-//            "http://mobile.reuters.com/reuters/rss/INT.xml",   "
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -92,29 +73,28 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                 if (view.getId() == android.R.id.icon1) {
                     ImageView iv = (ImageView) view;
                     try {
-                        String url =  cursor.getString(cursor.getColumnIndex("subject"));
+                        String url = cursor.getString(cursor.getColumnIndex("subject"));
                         if (url.contains("medium")) {
                             Drawable image = getResources().getDrawable(R.drawable.medium);
                             iv.setImageDrawable(image);
                         } else if (url.contains("npr")) {
                             Drawable image = getResources().getDrawable(R.drawable.npr);
                             iv.setImageDrawable(image);
-                        } else if (url.contains("bbc")){
+                        } else if (url.contains("bbc")) {
                             Drawable image = getResources().getDrawable(R.drawable.bbc);
                             iv.setImageDrawable(image);
                         } else {
                             Drawable image = getResources().getDrawable(R.drawable.rss);
                             iv.setImageDrawable(image);
                         }
-
                         return true;
                     } catch (Exception e) {
                     }
                 }
                 if (view.getId() == android.R.id.icon2) {
-                    String url =  cursor.getString(cursor.getColumnIndex("imageurl"));
-                    ImageView iv = (ImageView)view;
-                    if(url == null || url.isEmpty()){
+                    String url = cursor.getString(cursor.getColumnIndex("imageurl"));
+                    ImageView iv = (ImageView) view;
+                    if (url == null || url.isEmpty()) {
                         iv.setVisibility(View.GONE);
                     } else {
                         iv.setVisibility(View.VISIBLE);
@@ -125,7 +105,7 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                         } else {
                             iv.setImageBitmap(bitmap);
                         }
-                 }
+                    }
                     return true;
                 }
 
@@ -134,13 +114,20 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         });
         setListAdapter(mAdapter);
         if (isNetworkAvailable(getApplicationContext())) {
-            for (String url : sUrl) {
-                FeedPuller fp = new FeedPuller(getApplicationContext());
-                fp.execute(url);
-            }
-        }
-        else{
+            Handler myHandler = new DelayedHandler();
+            Message m = new Message();
+            myHandler.sendMessageDelayed(m, 2000);
+        } else {
             Toast.makeText(getApplicationContext(), "No network connectivity", 10).show();
+        }
+    }
+
+
+    class DelayedHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            FeedPuller fp = new FeedPuller(getApplicationContext());
+            fp.execute(mFeeds.getFeedUrls());
         }
     }
 
@@ -151,8 +138,18 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return new CursorLoader(this, InboxItemProvider.CONTENT_URI,
-                null, null, null, null);
+        CursorLoader loader = null;
+        if (bundle != null && !bundle.isEmpty()) {
+            String uri = bundle.getString("uri");
+            if (uri != null && !uri.isEmpty()) {
+                loader = new CursorLoader(this, Uri.parse(uri),
+                        null, null, null, null);
+            }
+        } else {
+            loader = new CursorLoader(this, FeedItemProvider.CONTENT_URI,
+                    null, null, null, null);
+        }
+        return loader;
     }
 
     @Override
@@ -171,12 +168,12 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         super.onListItemClick(l, v, position, id);
         TextView tv = (TextView) v.findViewById(android.R.id.text2);
         // Perform action on click
-        InboxItemDao dao = new InboxItemDao(getApplicationContext());
-        String uriString = InboxItemProvider.CONTENT_URI.toString() + "/" + id;
+        FeedItemDao dao = new FeedItemDao(getApplicationContext());
+        String uriString = FeedItemProvider.CONTENT_URI.toString() + "/" + id;
         Cursor cursor = getContentResolver().query(Uri.parse(uriString), null, null, null, null);
         cursor.moveToFirst();
         if (!cursor.isAfterLast()) {
-            InboxItem inboxitem = dao.cursorToInboxItem(cursor);
+            FeedItem inboxitem = dao.cursorToFeedItem(cursor);
             Uri uriUrl = Uri.parse(inboxitem.getSubject().trim());
             Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
             startActivity(launchBrowser);
@@ -195,21 +192,63 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle presses on the action bar items
         String uriString;
+        Bundle bundle = new Bundle();
         Toast toast;
         switch (item.getItemId()) {
             case R.id.action_add_item:
-                toast = Toast.makeText(getApplicationContext(), "Refresh feeds..", 10);
-                toast.show();
-                for (String url : sUrl) {
-                    FeedPuller fp = new FeedPuller(getApplicationContext());
-                    fp.execute(url);
+                if (!isNetworkAvailable(getApplicationContext())) {
+                    toast = Toast.makeText(getApplicationContext(), "No network connectivity..", 10);
+                } else {
+                    toast = Toast.makeText(getApplicationContext(), "Refresh feeds..", 10);
                 }
+                toast.show();
+                FeedPuller fp = new FeedPuller(getApplicationContext());
+                fp.execute(mFeeds.getFeedUrls());
                 return true;
             case R.id.action_delete_item:
-                uriString = InboxItemProvider.CONTENT_URI.toString();
+                uriString = FeedItemProvider.CONTENT_URI.toString();
                 getContentResolver().delete(Uri.parse(uriString), null, null);
                 toast = Toast.makeText(getApplicationContext(), "Clearing feeds...", 10);
                 toast.show();
+                return true;
+            case R.id.action_technology:
+                Feeds.FeedType.Technology.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.Technology.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_news:
+                Feeds.FeedType.News.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.News.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_sports:
+                Feeds.FeedType.Sports.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.Sports.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_business:
+                Feeds.FeedType.Business.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.Business.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_health:
+                Feeds.FeedType.Health.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.Health.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_us:
+                Feeds.FeedType.US.toString();
+                uriString = FeedItemProvider.CONTENT_URI_FILTER.toString() + Feeds.FeedType.US.toString();
+                bundle.putString("uri", uriString);
+                getLoaderManager().restartLoader(0, bundle, this);
+                return true;
+            case R.id.action_all_feeds:
+                getLoaderManager().restartLoader(0, null, this);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -219,12 +258,11 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
 
     private class MyAdapter extends SimpleCursorAdapter {
         public MyAdapter(Context context, Cursor c) {
-            super(context, R.layout.list_item, c, new String[]{"imageurl","imageurl","name", "body", "timestamp", }, new int[]{android.R.id.icon1,android.R.id.icon2, android.R.id.text1, android.R.id.text2, R.id.text3}, 0);
+            super(context, R.layout.list_item, c, new String[]{"imageurl", "imageurl", "name", "body", "timestamp",}, new int[]{android.R.id.icon1, android.R.id.icon2, android.R.id.text1, android.R.id.text2, R.id.text3}, 0);
         }
     }
 
-    public static boolean isNetworkAvailable(Context context)
-    {
+    public static boolean isNetworkAvailable(Context context) {
         return ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo() != null;
     }
 

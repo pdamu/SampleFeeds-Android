@@ -7,4 +7,26 @@
     <item
         android:id="@+id/action_delete_item"
         android:title="@string/action_delete_item" />
+    <item
+        android:id="@+id/action_technology"
+        android:title="@string/action_technology_items" />
+    <item
+        android:id="@+id/action_news"
+        android:title="@string/action_news_items" />
+    <item
+        android:id="@+id/action_sports"
+        android:title="@string/action_sports_items" />
+    <item
+        android:id="@+id/action_business"
+        android:title="@string/action_business_items" />
+    <item
+        android:id="@+id/action_health"
+        android:title="@string/action_health_items" />
+    <item
+        android:id="@+id/action_us"
+        android:title="@string/action_us_items" />
+
+    <item
+        android:id="@+id/action_all_feeds"
+        android:title="@string/action_all_items" />
 </menu>

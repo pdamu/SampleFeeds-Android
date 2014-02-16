@@ -14,21 +14,23 @@ import android.text.TextUtils;
 import android.util.Log;
 
 
-public class InboxItemProvider extends ContentProvider {
+public class FeedItemProvider extends ContentProvider {
 
     // database
-    private InboxItemDao mDao = new InboxItemDao(getContext());
-
+    private FeedItemDao mDao = new FeedItemDao(getContext());
 
     // used for the UriMacher
     private static final int INBOX_ITEMS = 10;
     private static final int INBOX_ITEM_ID = 20;
+    private static final int INBOX_ITEMS_FILTER = 30;
 
     private static final String AUTHORITY = "com.example.android.feedmagic";
 
     private static final String BASE_PATH = "inboxitems";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
             + "/" + BASE_PATH);
+    public static final Uri CONTENT_URI_FILTER = Uri.parse("content://" + AUTHORITY
+            + "/" + BASE_PATH + "/filter/");
 
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE
             + "/inboxitems";
@@ -38,12 +40,13 @@ public class InboxItemProvider extends ContentProvider {
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         sURIMatcher.addURI(AUTHORITY, BASE_PATH, INBOX_ITEMS);
+        sURIMatcher.addURI(AUTHORITY, BASE_PATH + "/filter/*", INBOX_ITEMS_FILTER);
         sURIMatcher.addURI(AUTHORITY, BASE_PATH + "/#", INBOX_ITEM_ID);
     }
 
     @Override
     public boolean onCreate() {
-        mDao = new InboxItemDao(getContext());
+        mDao = new FeedItemDao(getContext());
         mDao.open();
         return false;
     }
@@ -56,7 +59,9 @@ public class InboxItemProvider extends ContentProvider {
         Cursor cursor = null;
         switch (uriType) {
             case INBOX_ITEMS:
-                cursor = mDao.getDataCursor();
+            case INBOX_ITEMS_FILTER:
+                String filter = uri.getLastPathSegment();
+                cursor = mDao.getDataCursor(filter);
                 break;
 
             case INBOX_ITEM_ID:
@@ -82,9 +87,9 @@ public class InboxItemProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         //For the sample , just do a bulk add..
-        mDao.createInboxItem(values.getAsString("title"),values.getAsString("link"),
-                values.getAsString("description"),values.getAsLong("timestamp"),
-                values.getAsString("guid"),values.getAsString("imageurl"));
+        mDao.createFeedItem(values.getAsString("title"), values.getAsString("link"),
+                values.getAsString("description"), values.getAsLong("timestamp"),
+                values.getAsString("guid"), values.getAsString("imageurl"),values.getAsInteger("feedtype"));
         getContext().getContentResolver().notifyChange(uri, null);
         return Uri.parse(BASE_PATH + "/" + 0);
 

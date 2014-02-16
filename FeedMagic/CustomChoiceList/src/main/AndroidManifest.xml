@@ -39,7 +39,7 @@
         </activity>
 
         <provider
-            android:name="com.example.android.feedmagic.InboxItemProvider"
+            android:name=".FeedItemProvider"
             android:authorities="com.example.android.feedmagic;" >
         </provider>
 

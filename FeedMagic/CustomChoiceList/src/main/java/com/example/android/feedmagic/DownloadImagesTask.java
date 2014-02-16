@@ -31,6 +31,7 @@ public class DownloadImagesTask extends AsyncTask<ImageView, Void, Bitmap> {
 
     @Override
     protected Bitmap doInBackground(ImageView... imageViews) {
+        Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
         this.imageView = imageViews[0];
         return download_Image((String) imageView.getTag());
     }
@@ -51,7 +52,6 @@ public class DownloadImagesTask extends AsyncTask<ImageView, Void, Bitmap> {
             if (file.exists()) {
                 try {
                     bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
-                    Log.v("feedmagic","Reading from file..  " + url);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

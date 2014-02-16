@@ -19,5 +19,13 @@
     <string name="intro_message">This sample demonstrates how to get rss feeds off of network into a scrollable list, for use with <i>ListView</i>\'s <i>choiceMode</i> attribute.</string>
     <string name="action_add_item">Refresh  feeds</string>
     <string name="action_delete_item">Clear feeds</string>
+    <string name="action_news_items">World News</string>
+    <string name="action_technology_items">Technology</string>
+    <string name="action_sports_items">Sports</string>
+    <string name="action_business_items">Business</string>
+    <string name="action_health_items">Health</string>
+    <string name="action_us_items">US News</string>
+    <string name="action_all_items">All Feeds</string>
+
 
 </resources>

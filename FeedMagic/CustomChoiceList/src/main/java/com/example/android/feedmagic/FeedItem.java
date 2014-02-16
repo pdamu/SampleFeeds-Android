@@ -3,7 +3,7 @@ package com.example.android.feedmagic;
 /**
  * Created by pdamu on 1/14/14.
  */
-public class InboxItem {
+public class FeedItem {
     private int mId;
     private String mName;
     private String mSubject;
@@ -11,7 +11,15 @@ public class InboxItem {
     private  String mImageUrl;
     private String mBody;
     private long mTimeStamp;
+    private int mType;
 
+    public int getType() {
+        return mType;
+    }
+
+    public void setType(int mType) {
+        this.mType = mType;
+    }
 
     public String getImageUrl() {
         return mImageUrl;
