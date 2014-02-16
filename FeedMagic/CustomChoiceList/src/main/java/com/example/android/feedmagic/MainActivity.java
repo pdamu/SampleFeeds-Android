@@ -16,9 +16,12 @@
 
 package com.example.android.feedmagic;
 
+import android.app.ActionBar;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -59,6 +62,10 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getLoaderManager().initLoader(0, null, this);
+        ActionBar actionBar = getActionBar();
+        actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#4B7FD1")));
+        actionBar.setIcon(R.drawable.ic_action_news);
+
         mAdapter = new MyAdapter(this, null);
         mAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
@@ -70,6 +77,7 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                     tv.setText(timeText);
                     return true;
                 }
+
                 if (view.getId() == android.R.id.icon1) {
                     ImageView iv = (ImageView) view;
                     try {
@@ -82,6 +90,12 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
                             iv.setImageDrawable(image);
                         } else if (url.contains("bbc")) {
                             Drawable image = getResources().getDrawable(R.drawable.bbc);
+                            iv.setImageDrawable(image);
+                        } else if (url.contains("nytimes")) {
+                            Drawable image = getResources().getDrawable(R.drawable.nytimes);
+                            iv.setImageDrawable(image);
+                        } else if (url.contains("boston")) {
+                            Drawable image = getResources().getDrawable(R.drawable.boston);
                             iv.setImageDrawable(image);
                         } else {
                             Drawable image = getResources().getDrawable(R.drawable.rss);
@@ -116,7 +130,7 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         if (isNetworkAvailable(getApplicationContext())) {
             Handler myHandler = new DelayedHandler();
             Message m = new Message();
-            myHandler.sendMessageDelayed(m, 2000);
+            myHandler.sendMessageDelayed(m, 10000);
         } else {
             Toast.makeText(getApplicationContext(), "No network connectivity", 10).show();
         }
@@ -163,6 +177,8 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         mAdapter.swapCursor(null);
     }
 
+
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
@@ -175,8 +191,10 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         if (!cursor.isAfterLast()) {
             FeedItem inboxitem = dao.cursorToFeedItem(cursor);
             Uri uriUrl = Uri.parse(inboxitem.getSubject().trim());
-            Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
-            startActivity(launchBrowser);
+            if(uriUrl != null && !uriUrl.toString().isEmpty()){
+                Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
+                startActivity(launchBrowser);
+            }
         }
     }
 
@@ -194,6 +212,7 @@ public class MainActivity extends ListActivity implements LoaderManager.LoaderCa
         String uriString;
         Bundle bundle = new Bundle();
         Toast toast;
+        this.getListView().setSelection(0);
         switch (item.getItemId()) {
             case R.id.action_add_item:
                 if (!isNetworkAvailable(getApplicationContext())) {

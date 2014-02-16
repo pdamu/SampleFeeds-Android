@@ -25,6 +25,7 @@ public class Feeds {
         mFeedMap.put("http://www.npr.org/rss/rss.php?id=1006",FeedType.News);
         mFeedMap.put("http://feeds.bbci.co.uk/news/world/rss.xml",FeedType.News);
         mFeedMap.put("http://www.npr.org/rss/rss.php?id=1003",FeedType.US);
+        mFeedMap.put("http://feeds.boston.com/boston/news/nation",FeedType.US);
         mFeedMap.put("https://medium.com/feed/tech-talk",FeedType.Technology);
         mFeedMap.put("http://www.buzzfeed.com/tech.xml",FeedType.Technology);
         mFeedMap.put("http://feeds.bbci.co.uk/news/technology/rss.xml",FeedType.Technology);
@@ -32,7 +33,6 @@ public class Feeds {
         mFeedMap.put("http://feeds.bbci.co.uk/news/business/rss.xml",FeedType.Business);
         mFeedMap.put("http://rss.nytimes.com/services/xml/rss/nyt/Business.xml",FeedType.Business);
         mFeedMap.put("http://feeds.bbci.co.uk/news/health/rss.xml",FeedType.Health);
-        mFeedMap.put("http://www.health.com/health/diet-fitness/feed",FeedType.Health);
 
 
     }

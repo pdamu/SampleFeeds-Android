@@ -48,8 +48,7 @@ public class FeedPuller extends AsyncTask<String, Void, List<FeedItem>> {
                     rh.setCurrentSource(urlString);
                     xr.setContentHandler(rh);
                     xr.parse(new InputSource(feedUrl.openStream()));
-                } catch (Exception ioe) {
-                    Log.v("FeedPuller", "IO exception" + urls);
+                } catch (Exception e) {
                 }
             }
         } catch (MalformedURLException mfe) {
@@ -62,8 +61,10 @@ public class FeedPuller extends AsyncTask<String, Void, List<FeedItem>> {
             if (item.getName().length() < 100) {
                 values.put("title", item.getName().trim());
                 values.put("link", item.getSubject());
-                StringBuffer description = new StringBuffer(Html.fromHtml(item.getBody()).toString().trim());
-                description.trimToSize();
+                String temp  = Html.fromHtml(item.getBody()).toString().trim();
+                temp = temp.replace((char) 65532, '\n');
+                StringBuffer description  = new StringBuffer(temp.replace("\n",""));
+
                 if(description.length() > 150 ){
                     description.setLength(150);
                     description.append("..");
